@@ -22,6 +22,6 @@ countUntilWinner ballots = if ((*2) . snd . head) countResult <= totalVotes
 
 modifyBallots :: [Ballot] -> Count -> [Ballot]
 modifyBallots ballots count = okBallots ++ redistributedBallots where
-  eliminatedCandidates = map fst $ dropWhile (\can -> snd can /= (snd . last $ count)) count
+  eliminatedCandidates = (\\) ((nub . concat) ballots) $ map fst $ takeWhile (\can -> snd can /= (snd . last $ count)) count
   (ballotsToChange, okBallots) = partition (\b -> head b `elem` eliminatedCandidates) ballots
-  redistributedBallots = filter (/= []) . map tail $ ballotsToChange
+  redistributedBallots = filter (/= []) . map (\\ eliminatedCandidates) $ ballotsToChange

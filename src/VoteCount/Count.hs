@@ -2,7 +2,6 @@ module VoteCount.Count where
 
 import qualified Data.Map as M
 import Data.List
-import Data.Function (on)
 
 type Candidate = Char
 type Ballot = [Candidate]
@@ -14,7 +13,7 @@ countOnce = sortOn (negate . snd) . M.toList . foldr insertOne M.empty where
 
 countUntilWinner :: [Ballot] -> [Count]
 countUntilWinner ballots = if ((*2) . snd . head) countResult <= totalVotes
-  then countResult : (countUntilWinner modifiedBallots)
+  then countResult : countUntilWinner modifiedBallots
   else [countResult]
   where
     countResult = countOnce ballots

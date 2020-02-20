@@ -2,7 +2,6 @@ module Main where
 
 import VoteCount.Count
 import VoteCount.Input
-import System.IO
 
 main :: IO ()
 main = do

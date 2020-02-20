@@ -2,7 +2,7 @@ module VoteCount.Input where
 
 import qualified Data.Map as M
 import Data.List
-import System.IO
+import Control.Monad
 
 import VoteCount.Count (Ballot, Count)
 
@@ -13,7 +13,7 @@ getCandidates = getCandidateOrQuit M.empty
 
 getCandidateOrQuit :: CandidateInfo -> IO CandidateInfo
 getCandidateOrQuit currentCandidates = do
-  putStrLn "Please enter the name of a candidate in this election (or press enter to finish entering candidates)"
+  putStrLn "\nPlease enter the name of a candidate in this election (or press enter to finish entering candidates)"
   response <- getLine
   case response of
     "" -> return currentCandidates
@@ -54,22 +54,24 @@ getBallotOrQuit candidates ballots = do
 validateBallot :: [Char] -> Ballot -> Bool
 validateBallot eligibles ballot
   | length (nub ballot) /= length ballot = False
-  | any (\i -> not $ i `elem` eligibles) ballot = False
+  | any (`notElem` eligibles) ballot = False
   | otherwise = True
 
 printCounts :: CandidateInfo -> [Count] -> IO ()
 printCounts = printCountsIndexed 1
 
 printCountsIndexed :: Int -> CandidateInfo -> [Count] -> IO ()
+printCountsIndexed _ _ [] = return ()
 printCountsIndexed countNumber candidates (c:counts) = do
-  putStrLn $ "Count " ++ (show countNumber) ++ " - " ++ "(Total: " ++ (show total) ++ ", Target: " ++ (show $ (total `div` 2) + 1) ++ ")" ++ ": "
+  putStrLn $ "Count " ++ show countNumber ++ " - " ++ "(Total: " ++ show total ++ ", Target: " ++ show ((total `div` 2) + 1) ++ ")" ++ ": "
   printCount candidates c
-  if counts == []
-    then putStrLn $ "\n" ++ (candidates M.! (fst $ head c)) ++ " has won the election!\n"
-    else printCountsIndexed (countNumber + 1) candidates counts
+  when (null counts)
+    $ putStrLn $ "\n" ++ (candidates M.! fst (head c)) ++ " has won the election!\n"
+  printCountsIndexed (countNumber + 1) candidates counts
   where total = sum . map snd $ c
 
 printCount :: CandidateInfo -> Count -> IO ()
-printCount candidates (leader:rem) = do
-  putStrLn $ "    " ++ (candidates M.! (fst leader)) ++ ": " ++ (show $ snd leader)
-  if rem == [] then return () else printCount candidates rem
+printCount _ [] = return ()
+printCount candidates (leader:others) = do
+  putStrLn $ "    " ++ candidates M.! fst leader ++ ": " ++ show (snd leader)
+  printCount candidates others
